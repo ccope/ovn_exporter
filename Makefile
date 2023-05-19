@@ -8,6 +8,8 @@ BINARY:=ovn-exporter
 VERBOSE:=-v
 PROJECT=github.com/greenpau/ovn_exporter
 PKG_DIR=pkg/ovn_exporter
+BUILD_OS:=linux
+BUILD_ARCH:=amd64
 
 all:
 	@echo "Version: $(APP_VERSION), Branch: $(GIT_BRANCH), Revision: $(GIT_COMMIT)"
