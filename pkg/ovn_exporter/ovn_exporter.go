@@ -107,17 +107,27 @@ var (
 		"Whether the OVN chassis is up (1) or down (0), together with additional information about the chassis.",
 		[]string{"system_id", "uuid", "name", "ip"}, nil,
 	)
-	logicalSwitchInfo = prometheus.NewDesc(
+	logicalRouterCount = prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, "", "logical_router_info"),
+		"The information about OVN logical router. This metric is always up (1).",
+		[]string{"system_id"}, nil,
+	)
+	logicalRouterPortCount = prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, "", "logical_router_ports"),
+		"The number of logical router ports connected to the OVN logical router.",
+		[]string{"system_id"}, nil,
+	)
+	logicalSwitchCount = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "logical_switch_info"),
 		"The information about OVN logical switch. This metric is always up (1).",
-		[]string{"system_id", "uuid", "name"}, nil,
+		[]string{"system_id"}, nil,
 	)
-	logicalSwitchExternalIDs = prometheus.NewDesc(
+	/*logicalSwitchExternalIDs = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "logical_switch_external_id"),
 		"Provides the external IDs and values associated with OVN logical switches. This metric is always up (1).",
 		[]string{"system_id", "uuid", "key", "value"}, nil,
-	)
-	logicalSwitchPortBinding = prometheus.NewDesc(
+	)*/
+	logicalSwitchPortBindingCount = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "logical_switch_port_binding"),
 		"Provides the association between a logical switch and a logical switch port. This metric is always up (1).",
 		[]string{"system_id", "uuid", "port"}, nil,
@@ -127,10 +137,10 @@ var (
 		"The value of the tunnel key associated with the logical switch.",
 		[]string{"system_id", "uuid"}, nil,
 	)*/
-	logicalSwitchPorts = prometheus.NewDesc(
+	logicalSwitchPortCount = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "logical_switch_ports"),
 		"The number of logical switch ports connected to the OVN logical switch.",
-		[]string{"system_id", "uuid"}, nil,
+		[]string{"system_id"}, nil,
 	)
 	/*logicalSwitchPortInfo = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "logical_switch_port_info"),
@@ -360,10 +370,12 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- dbFileSize
 	ch <- logEventStat
 	ch <- chassisInfo
-	ch <- logicalSwitchInfo
-	ch <- logicalSwitchExternalIDs
-	ch <- logicalSwitchPorts
-	ch <- logicalSwitchPortBinding
+	ch <- logicalRouterCount
+	ch <- logicalRouterPortCount
+	ch <- logicalSwitchCount
+	//ch <- logicalSwitchExternalIDs
+	ch <- logicalSwitchPortCount
+	ch <- logicalSwitchPortBindingCount
 	/*ch <- logicalSwitchTunnelKey
 	ch <- logicalSwitchPortInfo
 	ch <- logicalSwitchPortTunnelKey*/
@@ -660,35 +672,20 @@ func (e *Exporter) GatherMetrics() {
 		e.IncrementErrorCounter()
 		upValue = 0
 	} else {
+		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
+			logicalSwitchCount,
+			prometheus.GaugeValue,
+			float64(len(lsws)),
+			e.Client.System.ID,
+		))
+		sumPorts := 0
+		sumPortBindings := 0
 		for _, lsw := range lsws {
-			e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
-				logicalSwitchInfo,
-				prometheus.GaugeValue,
-				1,
-				e.Client.System.ID,
-				lsw.UUID,
-				lsw.Name,
-			))
-			e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
-				logicalSwitchPorts,
-				prometheus.GaugeValue,
-				float64(len(lsw.Ports)),
-				e.Client.System.ID,
-				lsw.UUID,
-			))
+			sumPorts += len(lsw.Ports)
 			if len(lsw.Ports) > 0 {
-				for _, p := range lsw.Ports {
-					e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
-						logicalSwitchPortBinding,
-						prometheus.GaugeValue,
-						1,
-						e.Client.System.ID,
-						lsw.UUID,
-						p,
-					))
-				}
+				sumPortBindings += len(lsw.Ports)
 			}
-			if len(lsw.ExternalIDs) > 0 {
+			/*if len(lsw.ExternalIDs) > 0 {
 				for k, v := range lsw.ExternalIDs {
 					e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
 						logicalSwitchExternalIDs,
@@ -701,7 +698,7 @@ func (e *Exporter) GatherMetrics() {
 					))
 				}
 			}
-			/*e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
+			e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
 				logicalSwitchTunnelKey,
 				prometheus.GaugeValue,
 				float64(lsw.TunnelKey),
@@ -709,6 +706,18 @@ func (e *Exporter) GatherMetrics() {
 				lsw.UUID,
 			))*/
 		}
+		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
+			logicalSwitchPortCount,
+			prometheus.GaugeValue,
+			float64(sumPorts),
+			e.Client.System.ID,
+		))
+		e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
+			logicalSwitchPortBindingCount,
+			prometheus.GaugeValue,
+			float64(sumPortBindings),
+			e.Client.System.ID,
+		))
 	}
 	level.Debug(e.logger).Log(
 		"msg", "GatherMetrics() completed GetLogicalSwitches()",
