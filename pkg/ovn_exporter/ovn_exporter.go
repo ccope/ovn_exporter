@@ -407,14 +407,14 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	level.Debug(e.logger).Log(
 		"msg", "Collect() calls RLock()",
 		"system_id", e.Client.System.ID,
-	  )	  
+	)
 	e.RLock()
 	defer e.RUnlock()
 	if len(e.metrics) == 0 {
 		level.Debug(e.logger).Log(
 			"msg", "Collect() no metrics found",
 			"system_id", e.Client.System.ID,
-		  )	  
+		)
 		ch <- prometheus.MustNewConstMetric(
 			up,
 			prometheus.GaugeValue,
@@ -1247,7 +1247,7 @@ func (e *Exporter) GatherMetrics() {
 	))
 
 	e.nextCollectionTicker = time.Now().Add(time.Duration(e.pollInterval) * time.Second).Unix()
-	
+
 	level.Debug(e.logger).Log(
 		"msg", "GatherMetrics() returns",
 		"system_id", e.Client.System.ID,
