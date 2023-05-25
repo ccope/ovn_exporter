@@ -122,17 +122,17 @@ var (
 		"Provides the association between a logical switch and a logical switch port. This metric is always up (1).",
 		[]string{"system_id", "uuid", "port"}, nil,
 	)
-	logicalSwitchTunnelKey = prometheus.NewDesc(
+	/*logicalSwitchTunnelKey = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "logical_switch_tunnel_key"),
 		"The value of the tunnel key associated with the logical switch.",
 		[]string{"system_id", "uuid"}, nil,
-	)
+	)*/
 	logicalSwitchPorts = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "logical_switch_ports"),
 		"The number of logical switch ports connected to the OVN logical switch.",
 		[]string{"system_id", "uuid"}, nil,
 	)
-	logicalSwitchPortInfo = prometheus.NewDesc(
+	/*logicalSwitchPortInfo = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "logical_switch_port_info"),
 		"The information about OVN logical switch port. This metric is always up (1).",
 		[]string{
@@ -151,7 +151,7 @@ var (
 		prometheus.BuildFQName(namespace, "", "logical_switch_port_tunnel_key"),
 		"The value of the tunnel key associated with the logical switch port.",
 		[]string{"system_id", "uuid"}, nil,
-	)
+	)*/
 	networkPortUp = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "network_port"),
 		"The TCP port used for database connection. If the value is 0, then the port is not in use.",
@@ -364,9 +364,9 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	ch <- logicalSwitchExternalIDs
 	ch <- logicalSwitchPorts
 	ch <- logicalSwitchPortBinding
-	ch <- logicalSwitchTunnelKey
+	/*ch <- logicalSwitchTunnelKey
 	ch <- logicalSwitchPortInfo
-	ch <- logicalSwitchPortTunnelKey
+	ch <- logicalSwitchPortTunnelKey*/
 	ch <- networkPortUp
 	ch <- covAvg
 	ch <- covTotal
@@ -701,13 +701,13 @@ func (e *Exporter) GatherMetrics() {
 					))
 				}
 			}
-			e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
+			/*e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
 				logicalSwitchTunnelKey,
 				prometheus.GaugeValue,
 				float64(lsw.TunnelKey),
 				e.Client.System.ID,
 				lsw.UUID,
-			))
+			))*/
 		}
 	}
 	level.Debug(e.logger).Log(
@@ -719,7 +719,7 @@ func (e *Exporter) GatherMetrics() {
 		"msg", "GatherMetrics() calls GetLogicalSwitchPorts()",
 		"system_id", e.Client.System.ID,
 	)
-	lswps, err := e.Client.GetLogicalSwitchPorts()
+	/*lswps, err := e.Client.GetLogicalSwitchPorts()
 	if err != nil {
 		level.Error(e.logger).Log(
 			"msg", "GetLogicalSwitchPorts() failed",
@@ -750,7 +750,7 @@ func (e *Exporter) GatherMetrics() {
 				}
 			}
 
-			e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
+			/*e.metrics = append(e.metrics, prometheus.MustNewConstMetric(
 				logicalSwitchPortInfo,
 				prometheus.GaugeValue,
 				float64(1),
@@ -776,7 +776,7 @@ func (e *Exporter) GatherMetrics() {
 	level.Debug(e.logger).Log(
 		"msg", "GatherMetrics() completed GetLogicalSwitchPorts()",
 		"system_id", e.Client.System.ID,
-	)
+	)*/
 
 	northClusterID := ""
 	southClusterID := ""
